@@ -3,10 +3,10 @@
 TUI application for browsing and streaming movies and TV series.
 
 ```
->=<                >=<
-   ,.--'  ''-.        ,.--'  ''-.
-   (  )  ',_.'        (  )  ',_.'
-    Xx'xX              mn'mn`
+           >=<
+       ,.--'  ''-.
+       (  )  ',_.'
+        mn'mn`
 ```
 
 ## Features
@@ -51,14 +51,14 @@ hippo
 
 ### Keybindings
 
-| Key | Action |
-|-----|--------|
-| `h` `j` `k` `l` / arrows | Navigate |
-| `Space` / `Enter` | Select |
-| `/` | Search |
-| `Tab` | Toggle movie/TV search |
-| `q` / `Esc` | Quit / Go back |
-| `Ctrl+C` | Quit |
+| Key                      | Action                 |
+| ------------------------ | ---------------------- |
+| `h` `j` `k` `l` / arrows | Navigate               |
+| `Space` / `Enter`        | Select                 |
+| `/`                      | Search                 |
+| `Tab`                    | Toggle movie/TV search |
+| `q` / `Esc`              | Quit / Go back         |
+| `Ctrl+C`                 | Quit                   |
 
 ## License
 
