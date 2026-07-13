@@ -3,13 +3,10 @@
 TUI application for browsing and streaming movies and TV series.
 
 ```
-      /\  /\
-     /  \/  \
-    |  O  O  |
-    |    n    |
-    |  '---'  |
-     \       /
-      '-----'
+>=<                >=<
+   ,.--'  ''-.        ,.--'  ''-.
+   (  )  ',_.'        (  )  ',_.'
+    Xx'xX              mn'mn`
 ```
 
 ## Features
