@@ -20,7 +20,7 @@ TUI application for browsing and streaming movies and TV series.
 ## Install
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/pr4j3sh/hippo/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/pr4j3sh/hippo/refs/heads/master/install.sh | bash
 ```
 
 ## Build from source
