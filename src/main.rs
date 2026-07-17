@@ -20,6 +20,11 @@ use tmdb::TmdbClient;
 
 #[tokio::main]
 async fn main() -> io::Result<()> {
+    if std::env::args().any(|a| a == "--version" || a == "-V") {
+        println!("hippo {}", env!("CARGO_PKG_VERSION"));
+        return Ok(());
+    }
+
     let log_file = logging::init().unwrap_or_else(|e| {
         eprintln!("Warning: Failed to initialize logging: {}", e);
         std::path::PathBuf::from("hippo.log")

@@ -3,6 +3,7 @@ $ErrorActionPreference = "Stop"
 $Repo = "pr4j3sh/hippo"
 $BinaryName = "hippo"
 $InstallDir = if ($env:INSTALL_DIR) { $env:INSTALL_DIR } else { Join-Path $env:LOCALAPPDATA "hippo" }
+$Force = $args -contains "--force" -or $args -contains "-f"
 
 function Write-Info($msg)  { Write-Host "==> $msg" -ForegroundColor Green }
 function Write-Warn($msg)  { Write-Host "==> $msg" -ForegroundColor Yellow }
@@ -25,6 +26,31 @@ function Get-LatestVersion {
         Write-Err "Failed to get latest release version"
         exit 1
     }
+}
+
+function Get-CurrentVersion {
+    $exePath = Join-Path $InstallDir "$BinaryName.exe"
+    if (-not (Test-Path $exePath)) { return "" }
+    try {
+        $output = & $exePath --version 2>$null
+        if ($output -match 'hippo\s+(.+)') { return $Matches[1] }
+    } catch {}
+    return ""
+}
+
+function Compare-Versions {
+    param([string]$A, [string]$B)
+    $aClean = $A -replace '^v', ''
+    $bClean = $B -replace '^v', ''
+    $aParts = $aClean -split '\.'
+    $bParts = $bClean -split '\.'
+    for ($i = 0; $i -lt 3; $i++) {
+        $aNum = [int]($aParts[$i] ?? 0)
+        $bNum = [int]($bParts[$i] ?? 0)
+        if ($aNum -gt $bNum) { return 1 }
+        if ($aNum -lt $bNum) { return -1 }
+    }
+    return 0
 }
 
 function Install-Binary {
@@ -63,14 +89,31 @@ function Install-Binary {
 
 function Test-AlreadyInstalled {
     $exePath = Join-Path $InstallDir "$BinaryName.exe"
-    if (Test-Path $exePath) {
-        Write-Warn "$BinaryName is already installed at $exePath"
-        $confirm = Read-Host "Overwrite? [y/N]"
-        if ($confirm -notmatch "^[Yy]$") {
-            Write-Info "Aborted."
-            exit 0
+    if (-not (Test-Path $exePath)) { return }
+
+    $current = Get-CurrentVersion
+
+    if ([string]::IsNullOrEmpty($current)) {
+        Write-Warn "$BinaryName is already installed (version unknown)"
+        if (-not $Force) {
+            $confirm = Read-Host "Overwrite? [y/N]"
+            if ($confirm -notmatch "^[Yy]$") {
+                Write-Info "Aborted."
+                exit 0
+            }
         }
+        return
     }
+
+    $latest = Get-LatestVersion
+    $cmp = Compare-Versions -A $current -B $latest
+
+    if ($cmp -eq 0) {
+        Write-Info "Already up to date ($current)."
+        exit 0
+    }
+
+    Write-Info "Updating $BinaryName $current → $latest..."
 }
 
 function Test-PathEntry {

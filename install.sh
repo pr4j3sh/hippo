@@ -4,6 +4,7 @@ set -euo pipefail
 REPO="pr4j3sh/hippo"
 INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/bin}"
 BINARY_NAME="hippo"
+FORCE=0
 
 # Colors
 RED='\033[0;31m'
@@ -14,6 +15,13 @@ NC='\033[0m'
 info()  { echo -e "${GREEN}==> $1${NC}"; }
 warn()  { echo -e "${YELLOW}==> $1${NC}"; }
 error() { echo -e "${RED}==> $1${NC}" >&2; }
+
+# Parse arguments
+for arg in "$@"; do
+    case "$arg" in
+        --force|-f) FORCE=1 ;;
+    esac
+done
 
 # Detect OS
 detect_os() {
@@ -45,6 +53,28 @@ get_latest_version() {
     echo "$version"
 }
 
+# Get current installed version
+get_current_version() {
+    local current
+    current=$("$INSTALL_DIR/$BINARY_NAME" --version 2>/dev/null | awk '{print $2}' || echo "")
+    echo "$current"
+}
+
+# Compare semver: returns 0 if equal, 1 if $1 > $2, 2 if $1 < $2
+semver_compare() {
+    local IFS='.'
+    read -ra v1 <<< "$1"
+    read -ra v2 <<< "$2"
+
+    for i in 0 1 2; do
+        local a="${v1[i]:-0}"
+        local b="${v2[i]:-0}"
+        if (( a > b )); then return 0; fi
+        if (( a < b )); then return 1; fi
+    done
+    return 0
+}
+
 # Download and install
 install_binary() {
     local version="$1"
@@ -72,18 +102,40 @@ install_binary() {
     info "Installed ${BINARY_NAME} to ${INSTALL_DIR}/${BINARY_NAME}"
 }
 
-# Check if already installed
+# Check if already installed and handle updates
 check_installed() {
-    if command -v "$BINARY_NAME" &>/dev/null; then
-        local current
-        current=$("$BINARY_NAME" --version 2>/dev/null || echo "unknown")
-        warn "${BINARY_NAME} is already installed (${current})"
-        read -r -p "Overwrite? [y/N] " confirm
-        if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
-            info "Aborted."
-            exit 0
-        fi
+    if [ ! -x "$INSTALL_DIR/$BINARY_NAME" ]; then
+        return
     fi
+
+    local current
+    current=$(get_current_version)
+
+    if [ -z "$current" ]; then
+        warn "${BINARY_NAME} is already installed (version unknown)"
+        if [ "$FORCE" -eq 0 ]; then
+            read -r -p "Overwrite? [y/N] " confirm
+            if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
+                info "Aborted."
+                exit 0
+            fi
+        fi
+        return
+    fi
+
+    local latest
+    latest=$(get_latest_version)
+
+    # Strip leading 'v' if present
+    local current_clean="${current#v}"
+    local latest_clean="${latest#v}"
+
+    if [ "$current_clean" = "$latest_clean" ]; then
+        info "Already up to date (${current})."
+        exit 0
+    fi
+
+    info "Updating ${BINARY_NAME} ${current} → ${latest}..."
 }
 
 # Ensure PATH includes install dir
