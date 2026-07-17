@@ -18,15 +18,23 @@ jobs:
           - target: x86_64-unknown-linux-gnu
             os: ubuntu-latest
             artifact: hippo-linux-x86_64
+            archive: hippo-linux-x86_64.tar.gz
           - target: aarch64-unknown-linux-gnu
             os: ubuntu-latest
             artifact: hippo-linux-aarch64
+            archive: hippo-linux-aarch64.tar.gz
           - target: x86_64-apple-darwin
             os: macos-latest
             artifact: hippo-darwin-x86_64
+            archive: hippo-darwin-x86_64.tar.gz
           - target: aarch64-apple-darwin
             os: macos-latest
             artifact: hippo-darwin-aarch64
+            archive: hippo-darwin-aarch64.tar.gz
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+            artifact: hippo-windows-x86_64
+            archive: hippo-windows-x86_64.zip
 
     steps:
       - uses: actions/checkout@v4
@@ -46,12 +54,19 @@ jobs:
       - name: Build
         run: cargo build --release --target ${{ matrix.target }}
 
-      - name: Package
+      - name: Package (unix)
+        if: runner.os != 'Windows'
         run: |
           cd target/${{ matrix.target }}/release
-          tar -czf ../../../${{ matrix.artifact }}.tar.gz hippo
+          tar -czf ../../../${{ matrix.archive }} hippo
+
+      - name: Package (windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "target/${{ matrix.target }}/release/hippo.exe" -DestinationPath "${{ matrix.archive }}"
 
       - name: Upload to release
         uses: softprops/action-gh-release@v2
         with:
-          files: ${{ matrix.artifact }}.tar.gz
+          files: ${{ matrix.archive }}

@@ -19,9 +19,21 @@ TUI application for browsing and streaming movies and TV series.
 
 ## Install
 
+### Linux / macOS
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/pr4j3sh/hippo/refs/heads/master/install.sh | bash
 ```
+
+### Windows
+
+```powershell
+irm https://raw.githubusercontent.com/pr4j3sh/hippo/refs/heads/master/install.ps1 | iex
+```
+
+### Manual
+
+Download the latest binary for your platform from [Releases](https://github.com/pr4j3sh/hippo/releases).
 
 ## Build from source
 

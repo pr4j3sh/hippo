@@ -98,20 +98,30 @@ fn render_home(frame: &mut Frame, app: &App, area: Rect) {
         return;
     }
 
-    let constraints: Vec<Constraint> = app
-        .sections
-        .iter()
-        .map(|_| Constraint::Length(SECTION_HEIGHT as u16 + 2))
-        .collect();
+    let section_h = SECTION_HEIGHT as u16 + 2;
+    let total_h = app.sections.len() as u16 * section_h;
 
-    let chunks = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints(constraints)
-        .split(area);
+    let scroll_y = if total_h > area.height {
+        let target_top = app.section_idx as u16 * section_h;
+        let max_scroll = total_h.saturating_sub(area.height);
+        target_top.min(max_scroll)
+    } else {
+        0
+    };
 
     for (i, section) in app.sections.iter().enumerate() {
+        let screen_y = (i as u16 * section_h).saturating_sub(scroll_y);
+        if screen_y >= area.height {
+            break;
+        }
+        let section_area = Rect {
+            x: area.x,
+            y: area.y + screen_y,
+            width: area.width,
+            height: section_h,
+        };
         let is_active = i == app.section_idx;
-        render_section(frame, section, chunks[i], is_active, app.item_idx);
+        render_section(frame, section, section_area, is_active, app.item_idx);
     }
 }
 
@@ -151,7 +161,17 @@ fn render_section(
     };
     let items_per_page = items_per_page.max(1);
 
-    for (j, item) in section.items.iter().take(items_per_page).enumerate() {
+    let card_scroll = if is_active && selected_item >= items_per_page {
+        selected_item.saturating_sub(items_per_page - 1)
+    } else {
+        0
+    };
+
+    let end = (card_scroll + items_per_page).min(section.items.len());
+
+    for idx in card_scroll..end {
+        let item = &section.items[idx];
+        let j = idx - card_scroll;
         let x = inner.x + gap + (j as u16 * step);
         let card_area = Rect {
             x,
@@ -164,7 +184,7 @@ fn render_section(
             break;
         }
 
-        let is_selected = is_active && j == selected_item;
+        let is_selected = is_active && idx == selected_item;
 
         let inner_w = card_area.width.saturating_sub(4) as usize;
 
@@ -233,6 +253,30 @@ fn render_section(
             height: card_area.height,
         };
         frame.render_widget(paragraph, text_area);
+    }
+
+    if card_scroll > 0 {
+        let arrow = Paragraph::new("◀")
+            .style(Style::default().fg(Color::DarkGray));
+        let arrow_area = Rect {
+            x: inner.x,
+            y: inner.y + inner.height.saturating_sub(1),
+            width: 2,
+            height: 1,
+        };
+        frame.render_widget(arrow, arrow_area);
+    }
+    if end < section.items.len() {
+        let arrow = Paragraph::new("▶")
+            .style(Style::default().fg(Color::DarkGray));
+        let arrow_x = inner.x + inner.width.saturating_sub(2);
+        let arrow_area = Rect {
+            x: arrow_x,
+            y: inner.y + inner.height.saturating_sub(1),
+            width: 2,
+            height: 1,
+        };
+        frame.render_widget(arrow, arrow_area);
     }
 }
 
@@ -367,8 +411,11 @@ fn render_search(frame: &mut Frame, app: &App, area: Rect) {
         })
         .collect();
 
+    let mut state = ListState::default();
+    state.select(Some(app.search_item_idx));
+
     let list = List::new(items);
-    frame.render_widget(list, chunks[2]);
+    frame.render_stateful_widget(list, chunks[2], &mut state);
 }
 
 fn render_tv_detail(frame: &mut Frame, app: &App, area: Rect) {
@@ -470,8 +517,11 @@ fn render_tv_detail(frame: &mut Frame, app: &App, area: Rect) {
         .borders(Borders::ALL)
         .border_style(Style::default().fg(Color::Green));
 
+    let mut state = ListState::default();
+    state.select(Some(app.tv_item_idx));
+
     let season_list = List::new(seasons).block(season_block);
-    frame.render_widget(season_list, chunks[1]);
+    frame.render_stateful_widget(season_list, chunks[1], &mut state);
 }
 
 fn render_season_detail(frame: &mut Frame, app: &App, area: Rect) {
@@ -536,8 +586,11 @@ fn render_season_detail(frame: &mut Frame, app: &App, area: Rect) {
         .borders(Borders::ALL)
         .border_style(Style::default().fg(Color::Green));
 
+    let mut state = ListState::default();
+    state.select(Some(app.season_item_idx));
+
     let list = List::new(items).block(block);
-    frame.render_widget(list, area);
+    frame.render_stateful_widget(list, area, &mut state);
 }
 
 fn render_help_bar(frame: &mut Frame, app: &App, area: Rect) {
