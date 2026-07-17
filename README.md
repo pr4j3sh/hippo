@@ -80,6 +80,6 @@ hippo
 | `q` / `Esc`              | Quit / Go back         |
 | `Ctrl+C`                 | Quit                   |
 
-## License
+## References
 
-MIT
+> Vibe Coded with [Opencode](https://opencode.ai/)
