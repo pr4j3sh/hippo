@@ -49,8 +49,16 @@ The binary will be at `target/release/hippo`.
 
 Set your TMDB API key:
 
+**Linux / macOS:**
+
 ```bash
 export TMDB_API_KEY="your_key_here"
+```
+
+**Windows (PowerShell):**
+
+```powershell
+$env:TMDB_API_KEY = "your_key_here"
 ```
 
 Get a free key at [themoviedb.org](https://www.themoviedb.org/settings/api).
